@@ -471,7 +471,7 @@ save_Package(){
 
 
 
-init_ww /home/orange/myspace/kkk
+init_ww $WW_DIR
 sync_Code
 updateVersionNum
 
