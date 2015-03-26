@@ -1,0 +1,10 @@
+---------- Release Commit -------
+commit 4ea0e27bb7f7dd3c9b54e9c7ab9bb73a565b6b8e
+Merge: 691b79c fd780da
+Author: Zhiqiang Zhang <zqzhang.cas@gmail.com>
+Date:   Tue Jan 27 17:05:37 2015 +0800
+
+    Merge pull request #1734 from kangxu/webapi/webapi-vehicleinfo-ivi-tests/updateLogic
+    
+    [webapi][TC-2386] Add availability checking for Vehicle Info API
+---------------------------------

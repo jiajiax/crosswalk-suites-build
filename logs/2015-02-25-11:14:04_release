@@ -1,0 +1,10 @@
+---------- Release Commit -------
+commit 4356411af8cb4a283492127315d72ea38d9714de
+Merge: 563c3b3 4a4b62c
+Author: Wanming Lin <wanming.lin@intel.com>
+Date:   Mon Feb 16 18:45:11 2015 +0800
+
+    Merge pull request #1876 from chenxix/modify-contactsmanager
+    
+    [usecase] Update ContactsManager.feature
+---------------------------------

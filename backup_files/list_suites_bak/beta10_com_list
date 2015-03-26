@@ -1,0 +1,11 @@
+cAIOLIST="webapi-service-docroot-tests
+webapi-service-tests
+webapi-noneservice-tests"
+
+
+EMBEDDINGLIST="embeddingapi-usecase-tests
+webapi-embeddingapi-xwalk-tests"
+
+
+cAPKLIST="wrt-usecase-android-tests
+webapi-usecase-tests"

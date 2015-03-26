@@ -1,0 +1,12 @@
+EMBEDDINGLIST="embeddingapi-usecase-tests
+webapi-embeddingapi-xwalk-tests"
+
+
+APKLIST="wrt-usecase-android-tests
+webapi-usecase-tests"
+
+
+AIOLIST="webapi-service-docroot-tests
+webapi-service-tests
+webapi-noneservice-tests"
+

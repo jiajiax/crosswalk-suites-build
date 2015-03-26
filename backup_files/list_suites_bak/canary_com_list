@@ -1,0 +1,10 @@
+aAIOLIST="webapi-service-docroot-tests
+webapi-service-tests
+webapi-noneservice-tests"
+
+aEMBEDDINGLIST="embedding-api-android-tests
+usecase-embedding-android-tests"
+
+aAPKLIST="usecase-webapi-xwalk-tests
+usecase-wrt-android-tests"
+EMBEDDINGLIST="embedding-api-android-tests"

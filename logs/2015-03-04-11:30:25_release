@@ -1,0 +1,10 @@
+---------- Release Commit -------
+commit 068b5345d55fb5083acdb94cb5996feb555ef40c
+Merge: acae02a 66376a8
+Author: Wanming Lin <wanming.lin@intel.com>
+Date:   Wed Mar 4 09:34:24 2015 +0800
+
+    Merge pull request #1907 from chenxix/update_checkout_text_color
+    
+    [atip] Update method to get the text color defined in <style> label
+---------------------------------

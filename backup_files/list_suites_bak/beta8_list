@@ -1,0 +1,14 @@
+APKLIST="wrt-usecase-android-tests
+wrt-sampleapp-android-tests
+webapi-usecase-w3c-tests
+wrt-common-webapp-tests
+webapi-sampleapp-embedding-tests"
+
+CORDOVALIST="cordova-mobilespec-android-tests
+cordova-sampleapp-android-tests
+cordova-webapp-android-tests
+cordova-usecase-android-tests
+webapi-usecase-w3c-tests"
+
+
+dAPKLIST="webapi-sampleapp-embedding-tests"

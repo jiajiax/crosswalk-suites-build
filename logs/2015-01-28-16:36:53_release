@@ -1,0 +1,10 @@
+---------- Release Commit -------
+commit 9946ca647188b167308c18bcf952e0c002103ee6
+Merge: 490a158 0f1661f
+Author: Zhiqiang Zhang <zqzhang.cas@gmail.com>
+Date:   Wed Jan 28 14:20:03 2015 +0800
+
+    Merge pull request #1735 from JianfengXu/csp/rename
+    
+    [webapi] Rename support file to suit test for CSP
+---------------------------------

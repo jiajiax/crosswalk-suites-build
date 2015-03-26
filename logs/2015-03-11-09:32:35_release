@@ -1,0 +1,10 @@
+---------- Release Commit -------
+commit 0c6e2d739e283672a97e5674e68730d9e698fd02
+Merge: cfb994a acf0f34
+Author: Wanming Lin <wanming.lin@intel.com>
+Date:   Tue Mar 10 17:45:52 2015 +0800
+
+    Merge pull request #1923 from JianfengXu/auto/ww11
+    
+    [usecase] Automate 2 usecases
+---------------------------------
