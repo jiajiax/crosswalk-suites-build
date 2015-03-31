@@ -1,9 +1,0 @@
----------- Release Commit -------
-commit 4f4b736bbdefd6574ca652262d6726b7a777e0cd
-Author: cicili <cici.x.li@intel.com>
-Date:   Wed Mar 11 10:42:58 2015 +0800
-
-    Update README.md
-
-M	tools/atip/README.md
----------------------------------
