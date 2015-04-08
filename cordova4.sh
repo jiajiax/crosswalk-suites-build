@@ -4,7 +4,7 @@ PATH=/usr/java/sdk/tools:/usr/java/sdk/platform-tools:/usr/java/jdk1.7.0_67/bin:
 
 ROOT_DIR=$(dirname $(readlink -f $0))
 SHARED_SPACE_DIR=/mnt/jiajiax_shared/release
-CTS_DIR=$ROOT_DIR/../work_space/release/crosswalk-test-suite-13
+CTS_DIR=$ROOT_DIR/../work_space/release/crosswalk-cordova4.0
 DEMOEX_DIR=$CTS_DIR/../demo-express
 LOG_DIR=$ROOT_DIR/logs
 RELEASE_COMMIT_FILE=$LOG_DIR/$(date +%Y-%m-%d-%T)_release
@@ -17,10 +17,9 @@ wweek=$(date +"%W" -d "+1 weeks")
 WW_DIR=/data/TestSuites_Storage/live
 . $ROOT_DIR/list_suites/beta13_list
 
-echo "Begin flag ---------------- `date` ---------------" > $BUILD_LOG
+#echo "Cordova4.0 Begin flag ---------------- `date` ---------------" >> $BUILD_LOG
 
-CORDOVA_SAMPLEAPP_LIST="mobilespec
-helloworld
+CORDOVA_SAMPLEAPP_LIST="helloworld
 remotedebugging
 gallery"
 
@@ -56,12 +55,12 @@ BRANCH_NAME=Crosswalk-13
 
 init_ww(){
     
-    [ -d $1/android/beta/$VERSION_NO ] && rm -rf $1/android/beta/$VERSION_NO
-    mkdir -p $1/android/beta/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova3.6/{x86,arm}}
+    [ -d $1/android/beta/$VERSION_NO/testsuites-cordova4.0 ] && rm -rf $1/android/beta/$VERSION_NO/testsuites-cordova4.0
+    mkdir -p $1/android/beta/$VERSION_NO/testsuites-cordova4.0/{x86,arm}
     
     EMBEDDED_TESTS_DIR=$1/android/beta/$VERSION_NO/testsuites-embedded/
     SHARED_TESTS_DIR=$1/android/beta/$VERSION_NO/testsuites-shared/
-    CORDOVA_TESTS_DIR=$1/android/beta/$VERSION_NO/testsuites-cordova3.6/
+    CORDOVA_TESTS_DIR=$1/android/beta/$VERSION_NO/testsuites-cordova4.0/
     ANDROID_IN_PROCESS_FLAG=$1/android/beta/$VERSION_NO/BUILD-INPROCESS
     [ ! -f $ANDROID_IN_PROCESS_FLAG ] && touch $ANDROID_IN_PROCESS_FLAG
     tests_path_arr=([embedded]=$EMBEDDED_TESTS_DIR [shared]=$SHARED_TESTS_DIR)
@@ -123,14 +122,18 @@ sync_Code(){
     # Get latest code from github
     cd $DEMOEX_DIR ; git reset --hard HEAD ;git checkout master ;git pull ;cd -
     #cd $CTS_DIR ; git reset --hard HEAD; git checkout master; cd -
-    cd $CTS_DIR ; git reset --hard HEAD;git checkout $BRANCH_NAME;git pull
-    RELEASE_COMMIT_ID=$(git log -1 --pretty=oneline | awk '{print $1}')
+    cd $CTS_DIR ; git reset --hard HEAD;git checkout $BRANCH_NAME ;git pull ;git stash apply stash@{0}
+    cd $CTS_DIR/tools/cordova ; git reset --hard HEAD;git checkout master ;git pull ;git stash apply stash@{0}
+    cd $CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine;git reset --hard HEAD;git checkout master;git pull
+    cd $CTS_DIR/tools/cordova_plugins/cordova-plugin-whitelist;git pull
+    
 }
 
 
 updateVersionNum(){
 
     sed -i "s|\"main-version\": \"\([^\"]*\)\"|\"main-version\": \"$VERSION_NO\"|g" $CTS_DIR/VERSION
+    sed -i "s/:11+/:$VERSION_NO/g" $CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine/libs/xwalk_core_library/xwalk.gradle
 }
 
 
@@ -204,53 +207,6 @@ clean_operator(){
 
 }
 
-check_Suite(){
-    sum_suites=`find $CTS_DIR -name $1 -type d |wc -l`
-    if [ $sum_suites -eq 1 ];then
-        SUITE_DIR=`find $CTS_DIR -name $1 -type d`
-        echo $SUITE_DIR
-        return
-    elif [ $sum_suites -gt 1 ];then
-        echo "$1 not unique !!!" >> $BUILD_LOG
-        return 1
-    else
-        echo "$1 not exists !!!" >> $BUILD_LOG
-        return 1
-    fi
-}
-
-
-pack_Apk(){
-
-    #prepare_tools $1 apk
-    #if [ $? -eq 0 ];then
-        
-        #clean_operator
-        #multi_thread_pack 5
-        for apk in $APKLIST;do
-            read -u 113
-            {
-                apk_num=`find $CTS_DIR -name $apk -type d | wc -l`
-                if [ $apk_num -eq 1 ];then
-                    apk_dir=`find $CTS_DIR -name $apk -type d`
-                    $CTS_DIR/tools/build/pack.py -t apk -m $2 -a $1 -s $apk_dir -d ${tests_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
-                    [ $? -ne 0 ] && echo "[apk] [$1] [$2] <$apk>" >> $BUILD_LOG
-                elif [ $apk_num -gt 1 ];then
-                    echo "$apk not unique !!!" >> $BUILD_LOG
-                else
-                    echo "$apk not exists !!!" >> $BUILD_LOG
-                fi
-
-                echo -ne "\n" 1>&113
-            }&
-        done
-
-        wait
-        #clean_operator
-    #fi
-
-}
-
 
 pack_Cordova(){
     #prepare_tools $1 cordova
@@ -264,7 +220,7 @@ pack_Cordova(){
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
                 if [ $cordova_num -eq 1 ];then
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
-                    $CTS_DIR/tools/build/pack.py -t cordova -s $cordova_dir -d $CORDOVA_TESTS_DIR/$1 --tools=$CTS_DIR/tools
+                    $CTS_DIR/tools/build/pack.py -t cordova --sub-version 4.0 -s $cordova_dir -d $CORDOVA_TESTS_DIR/$1 --tools=$CTS_DIR/tools
                     [ $? -ne 0 ] && echo "[cordova] [$1] <$cordova>" >> $BUILD_LOG
                 elif [ $cordova_num -gt 1 ];then
                     echo "$cordova not unique !!!" >> $BUILD_LOG
@@ -292,7 +248,7 @@ pack_Cordova_SampleApp(){
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
             read -u 113
             {
-                ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 3.6 --tools=$CTS_DIR/tools
+                ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 4.0 --tools=$CTS_DIR/tools
                 [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] $cordova_sampleapp" >> $BUILD_LOG
                 echo -ne "\n" 1>&113
             }&
@@ -308,39 +264,6 @@ pack_Cordova_SampleApp(){
 
 }
 
-pack_Embeddingapi(){
-    #prepare_tools $1 embeddingapi
-    #if [ $? -eq 0 ];then
-        #clean_operator
-        #multi_thread_pack 2
-        for emb_suite in $EMBEDDINGLIST;do
-            read -u 113
-            {
-                emb_num=`find $CTS_DIR -name $emb_suite -type d | wc -l`
-                if [ $emb_num -eq 1 ];then
-                    emb_dir=`find $CTS_DIR -name $emb_suite -type d`
-                    if [ $2 = "shared" ];then
-                        find $CTS_DIR/tools/crosswalk-webview/ -name "libxwalkcore.so" -exec rm -f {} \;
-                        find $CTS_DIR/tools/crosswalk-webview/ -name "xwalk_core_library_java_library_part.jar" -exec rm -f {} \;
-                        $CTS_DIR/tools/build/pack.py -t embeddingapi -s $emb_dir -d $SHARED_TESTS_DIR/$1 --tools=$CTS_DIR/tools
-                    elif [ $2 = "embedded" ];then
-                        $CTS_DIR/tools/build/pack.py -t embeddingapi -s $emb_dir -d $EMBEDDED_TESTS_DIR/$1 --tools=$CTS_DIR/tools
-                    fi
-                    [ $? -ne 0 ] && echo "[embeddingapi] [$1] [$2] <$emb_suite>" >> $BUILD_LOG
-                elif [ $emb_num -gt 1 ];then
-                    echo "$emb_suite not unique !!!" >> $BUILD_LOG
-                else
-                    echo "$emb_suite not exists !!!" >> $BUILD_LOG
-                fi
-                echo -ne "\n" 1>&113
-            }&
-        done
-        
-        wait
-        #clean_operator
-    #fi
-
-}
 
 pack_Aio(){
     #prepare_tools $2 $1
@@ -380,14 +303,6 @@ pack_Aio(){
 
 }
 
-copy_SDK(){
-
-    SDK_dir=$ROOT_DIR/../images/linux-ftp.sh.intel.com/pub/mirrors/01org/crosswalk/releases/crosswalk/android/beta/$VERSION_NO
-    WW_SDK_dir=$EMBEDDED_TESTS_DIR/../crosswalk-tools
-    [ -d $SDK_dir ] && cp -a $SDK_dir $WW_SDK_dir
-    touch $EMBEDDED_TESTS_DIR/../$RELEASE_COMMIT_ID 
-
-}
 
 save_Package(){
     mail_pkg_address=android/beta/$VERSION_NO
@@ -401,7 +316,7 @@ save_Package(){
     fulltest_dir=/mnt/otcqa/$wdir/beta/"ww"$wweek"."$wtoday/$VERSION_NO"~"$complete_time
     mkdir -p $fulltest_dir
     cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
-    cp -r $CORDOVA_TESTS_DIR $fulltest_dir/
+    cp -r $CORDOVA_TESTS_DIR'*' $fulltest_dir/
     chmod -R 777 $fulltest_dir
     mail_pkg_address=$wdir/beta/"ww"$wweek"."$wtoday/$VERSION_NO"~"$complete_time
     python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID $BRANCH_NAME DL
@@ -426,76 +341,24 @@ clean_operator
 multi_thread_pack 8
 
 
-prepare_tools x86 embeddingapi
-prepare_tools x86 apk
-prepare_tools x86 cordova
 
+#pack_Cordova x86 &
+#pack_Aio cordova x86 &
+#pack_Cordova_SampleApp x86 &
+#wait
 
-pack_Cordova x86 &
-pack_Apk x86 embedded &
-pack_Apk x86 shared &
-pack_Embeddingapi x86 embedded &
-pack_Aio cordova x86 &
-pack_Aio apk x86 embedded &
-pack_Aio apk x86 shared
-pack_Cordova_SampleApp x86 &
-wait
-
-pack_Embeddingapi x86 shared &
-wait
-
-
-prepare_tools arm embeddingapi
-prepare_tools arm apk
-prepare_tools arm cordova
-
-pack_Apk arm embedded &
-pack_Apk arm shared &
 pack_Cordova arm &
-pack_Embeddingapi arm embedded &
 pack_Aio cordova arm &
-pack_Aio apk arm embedded &
-pack_Aio apk arm shared
 pack_Cordova_SampleApp arm &
 wait
 
 
-pack_Embeddingapi arm shared &
-wait
-
-
-
-
 clean_operator
 
-copy_SDK
-#rm -f $ANDROID_IN_PROCESS_FLAG
-#echo "End flag ---------------- `date`------------------" >> $BUILD_LOG
+rm -f $ANDROID_IN_PROCESS_FLAG
+echo "End flag ---------------- `date`------------------" >> $BUILD_LOG
 
-#save_Package
-
-
-#pack_Cordova x86 
-#pack_Cordova arm 
-#pack_Cordova_SampleApp x86 
-#pack_Cordova_SampleApp arm 
-#pack_Apk x86 embedded
-#pack_Apk x86 shared
-#pack_Apk arm embedded
-#pack_Apk arm shared
-#pack_Embeddingapi x86 embedded
-#pack_Embeddingapi x86 shared
-#pack_Embeddingapi arm embedded
-#pack_Embeddingapi arm shared
-#pack_Aio apk x86 embedded
-#pack_Aio apk x86 shared
-#pack_Aio apk arm embedded
-#pack_Aio apk arm shared
-#pack_Aio cordova x86 
-#pack_Aio cordova arm 
-#copy_SDK
-#save_Package
-
+save_Package
 
 
 recover_Tests usecase-webapi-xwalk-tests $CTS_DIR/usecase/usecase-webapi-xwalk-tests

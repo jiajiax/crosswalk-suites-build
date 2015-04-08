@@ -58,17 +58,17 @@ init_ww(){
     [ -d $1/android/master/$VERSION_NO ] && rm -rf $1/android/master/$VERSION_NO
     if [ $(date +%w) -eq 3 ];then
         [ -d $1/tizen-common/master/$VERSION_NO ] && rm -rf $1/tizen-common/master/$VERSION_NO
-        mkdir -p $1/{android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova/{x86,arm}},beta},tizen-common/master/$VERSION_NO}
+        mkdir -p $1/{android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova3.6/{x86,arm}},beta},tizen-common/master/$VERSION_NO}
         TIZEN_TESTS_DIR=$1/tizen-common/master/$VERSION_NO
         TIZEN_IN_PROCESS_FLAG=$TIZEN_TESTS_DIR/BUILD-INPROCESS
         [ ! -f $TIZEN_IN_PROCESS_FLAG ] && touch $TIZEN_IN_PROCESS_FLAG
     else
-        mkdir -p $1/android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova/{x86,arm}},beta}
+        mkdir -p $1/android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova3.6/{x86,arm}},beta}
     fi
     
     EMBEDDED_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-embedded/
     SHARED_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-shared/
-    CORDOVA_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-cordova/
+    CORDOVA_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-cordova3.6/
     ANDROID_IN_PROCESS_FLAG=$1/android/master/$VERSION_NO/BUILD-INPROCESS
     [ ! -f $ANDROID_IN_PROCESS_FLAG ] && touch $ANDROID_IN_PROCESS_FLAG
     tests_path_arr=([embedded]=$EMBEDDED_TESTS_DIR [shared]=$SHARED_TESTS_DIR)
@@ -456,6 +456,8 @@ save_Package(){
     wtoday=$[$(date +%w)]
     wdir="WW"$wweek
 
+    mail_pkg_address=android/master/$VERSION_NO
+    python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID master nightly
     mkdir -p /mnt/otcqa/$wdir/{master/"ww"$wweek"."$wtoday,beta/"ww"$wweek"."$wtoday,stable,webtestingservice}
     if [ $wtoday -eq 5 ];then
         fulltest_dir=/mnt/otcqa/$wdir/master/"ww"$wweek"."$wtoday/FullTest
@@ -464,7 +466,7 @@ save_Package(){
         cp -r $CORDOVA_TESTS_DIR $fulltest_dir/
         chmod -R 777 $fulltest_dir
         mail_pkg_address=$wdir/master/"ww"$wweek"."$wtoday/FullTest
-        python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID master
+        python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID master DL
     fi    
     
 }
@@ -502,12 +504,13 @@ pack_Cordova x86 &
 pack_Apk x86 embedded &
 pack_Apk x86 shared &
 pack_Embeddingapi x86 embedded &
+pack_Cordova_SampleApp x86 &
 pack_Aio cordova x86 &
+pack_Aio apk x86 embedded &
+pack_Aio apk x86 shared &
 wait
 
 pack_Embeddingapi x86 shared &
-pack_Aio apk x86 embedded &
-pack_Cordova_SampleApp x86 &
 wait
 
 
@@ -520,19 +523,15 @@ pack_Apk arm shared &
 pack_Cordova arm &
 pack_Embeddingapi arm embedded &
 pack_Aio cordova arm &
-wait
-
-
-pack_Embeddingapi arm shared &
+pack_Aio apk arm shared &
 pack_Aio apk arm embedded &
 pack_Cordova_SampleApp arm &
 wait
 
-pack_Aio apk arm shared
 
+pack_Embeddingapi arm shared &
+wait
 
-prepare_tools x86 apk
-pack_Aio apk x86 shared
 
 clean_operator
 
@@ -541,29 +540,6 @@ rm -f $ANDROID_IN_PROCESS_FLAG
 echo "End flag ---------------- `date`------------------" >> $BUILD_LOG
 
 save_Package
-
-
-#pack_Cordova x86 
-#pack_Cordova arm 
-#pack_Cordova_SampleApp x86 
-#pack_Cordova_SampleApp arm 
-#pack_Apk x86 embedded
-#pack_Apk x86 shared
-#pack_Apk arm embedded
-#pack_Apk arm shared
-#pack_Embeddingapi x86 embedded
-#pack_Embeddingapi x86 shared
-#pack_Embeddingapi arm embedded
-#pack_Embeddingapi arm shared
-#pack_Aio apk x86 embedded
-#pack_Aio apk x86 shared
-#pack_Aio apk arm embedded
-#pack_Aio apk arm shared
-#pack_Aio cordova x86 
-#pack_Aio cordova arm 
-#copy_SDK
-#save_Package
-
 
 
 recover_Tests usecase-webapi-xwalk-tests $CTS_DIR/usecase/usecase-webapi-xwalk-tests
