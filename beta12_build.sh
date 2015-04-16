@@ -209,7 +209,7 @@ pack_wgt()
 	    merge_xml $wgt $wgt_dir
             $cts_dir/tools/build/pack.py -t wgt -s $wgt_dir -d $WW_dir/tizen/wgt --tools=$cts_dir/tools
             if [ $? -ne 0 ];then
-                echo "[wgt] <$wgt> failed">>$script_dir/logs/beta12_error.log
+                echo "[wgt] <$wgt> failed">>$script_dir/logs/beta_error_${version_num}.log
             fi
 	    cancel_xml $wgt $wgt_dir
             echo $wgt_dir
@@ -227,7 +227,7 @@ pack_xpk()
             xpk_dir=`find $cts_dir -name $xpk -type d`
             $cts_dir/tools/build/pack.py -t xpk -s $xpk_dir -d $WW_dir/tizen/wgt --tools=$cts_dir/tools
             if [ $? -ne 0 ];then
-                echo "[xpk] <$xpk> failed">>$script_dir/logs/beta12_error.log
+                echo "[xpk] <$xpk> failed">>$script_dir/logs/beta_error_${version_num}.log
             fi
             echo $xpk_dir
         else
@@ -271,7 +271,7 @@ pack_cordova_arm()
 	        merge_xml $cordova_arm $cordova_arm_dir
             $cts_dir/tools/build/pack.py -t cordova -s $cordova_arm_dir -d $WW_dir/android/cordova/arm
             if [ $? -ne 0 ];then
-                echo "[cordova][arm] <$cordova_arm> failed">>$script_dir/logs/beta12_error.log
+                echo "[cordova][arm] <$cordova_arm> failed">>$script_dir/logs/beta_error_${version_num}.log
             fi
             echo $cordova_arm_dir
 	        if [ $cordova_arm = "usecase-webapi-xwalk-tests" ];then
@@ -302,7 +302,7 @@ pack_embeddingapi()
             #        #cp -a $emb_pkg_dir/tests_$emd_flag".xml" $emb_pkg_dir/tests.xml
             #        $cts_dir/tools/build/pack.py -t embeddingapi --cv $emd_flag -s $emb_pkg_dir -d $WW_dir/android/embeddingapi/$1 --tools=$cts_dir/tools
             #        if [ $? -ne 0 ];then
-            #            echo "$emb_pkg failed">>$script_dir/logs/beta12_error.log
+            #            echo "$emb_pkg failed">>$script_dir/logs/beta_error_${version_num}.log
             #        else
             #            emb_pkgname=`ls $WW_dir/android/embeddingapi/$1/ | grep "embedding-api-android"`
             #            mv $WW_dir/android/embeddingapi/$1/$emb_pkgname $WW_dir/android/embeddingapi/$1/${emb_pkgname/api-android/api-$emd_flag-android}
@@ -311,7 +311,7 @@ pack_embeddingapi()
             #else
             $cts_dir/tools/build/pack.py -t embeddingapi -s $emb_pkg_dir -d $WW_dir/android/embeddingapi/$1 --tools=$cts_dir/tools
             if [ $? -ne 0 ];then
-                echo "$emb_pkg failed">>$script_dir/logs/beta12_error.log
+                echo "$emb_pkg failed">>$script_dir/logs/beta_error_${version_num}.log
             fi
 
             echo $emb_pkg_dir
@@ -333,13 +333,13 @@ pack_aio()
             cd $aio_dir
             ./pack.sh -a $1
             if [ $? -ne 0 ];then
-                echo "[webapi all-in-one][$1] <$aio_$1> failed">>$script_dir/logs/beta12_error.log
+                echo "[webapi all-in-one][$1] <$aio_$1> failed">>$script_dir/logs/beta_error_${version_num}.log
             fi
             mv *.zip $WW_dir/android/all-in-one/$1
             if [ $1 = "arm" ];then
                 ./pack.sh -t cordova
                 if [ $? -ne 0 ];then
-                    echo "[cordova all-in-one][$1] <$aio_$1> failed">>$script_dir/logs/beta12_error.log
+                    echo "[cordova all-in-one][$1] <$aio_$1> failed">>$script_dir/logs/beta_error_${version_num}.log
                 fi
                 mv *.zip $WW_dir/android/all-in-one/$1
             fi
@@ -362,11 +362,11 @@ save_package(){
     cp -r /data/pkgs/beta_WW_pkgs/$version_num"~"$end_time /mnt/otcqa/$wdir/beta/"ww"$wweek"."$wtoday
     chmod -R 775 /mnt/otcqa/$wdir/beta/"ww"$wweek"."$wtoday/$version_num"~"$end_time
     pkgaddress=$wdir/beta/"ww"$wweek"."$wtoday/$version_num"~"$end_time
-    python $script_dir/smail.py $version_num $pkgaddress $beta_commit $beta_branch
+    python $script_dir/smail.py $version_num $pkgaddress $beta_commit $beta_branch DL
 
 }
 
-echo "" > $script_dir/logs/beta12_error.log
+echo "" > $script_dir/logs/beta_error_${version_num}.log
 init_ww
 sync_code
 updateVersionNum

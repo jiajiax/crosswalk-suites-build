@@ -28,9 +28,9 @@ gallery"
 NEW_VERSION_FLAG=0
 SUITE_DIR=""
 declare -A tests_path_arr
+declare -A cordova_path_arr
 EMBEDDED_TESTS_DIR=""
 SHARED_TESTS_DIR=""
-CORDOVA_TESTS_DIR=""
 TIZEN_TESTS_DIR=""
 ANDROID_IN_PROCESS_FLAG=""
 TIZEN_IN_PROCESS_FLAG=""
@@ -58,20 +58,23 @@ init_ww(){
     [ -d $1/android/master/$VERSION_NO ] && rm -rf $1/android/master/$VERSION_NO
     if [ $(date +%w) -eq 3 ];then
         [ -d $1/tizen-common/master/$VERSION_NO ] && rm -rf $1/tizen-common/master/$VERSION_NO
-        mkdir -p $1/{android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova3.6/{x86,arm}},beta},tizen-common/master/$VERSION_NO}
+        mkdir -p $1/{android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm}},beta},tizen-common/master/$VERSION_NO}
         TIZEN_TESTS_DIR=$1/tizen-common/master/$VERSION_NO
         TIZEN_IN_PROCESS_FLAG=$TIZEN_TESTS_DIR/BUILD-INPROCESS
         [ ! -f $TIZEN_IN_PROCESS_FLAG ] && touch $TIZEN_IN_PROCESS_FLAG
     else
-        mkdir -p $1/android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},testsuites-cordova3.6/{x86,arm}},beta}
+        mkdir -p $1/android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm}},beta}
     fi
     
     EMBEDDED_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-embedded/
     SHARED_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-shared/
-    CORDOVA_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-cordova3.6/
+    #CORDOVA_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-cordova3.6/
+    CORDOVA_EMBEDDED_DIR=$1/android/master/$VERSION_NO/cordova3.6-embedded/
+    CORDOVA_SHARED_DIR=$1/android/master/$VERSION_NO/cordova3.6-shared/
     ANDROID_IN_PROCESS_FLAG=$1/android/master/$VERSION_NO/BUILD-INPROCESS
     [ ! -f $ANDROID_IN_PROCESS_FLAG ] && touch $ANDROID_IN_PROCESS_FLAG
     tests_path_arr=([embedded]=$EMBEDDED_TESTS_DIR [shared]=$SHARED_TESTS_DIR)
+    cordova_path_arr=([embedded]=$CORDOVA_EMBEDDED_DIR [shared]=$CORDOVA_SHARED_DIR)
 
 }
 
@@ -327,7 +330,7 @@ pack_Cordova(){
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
                 if [ $cordova_num -eq 1 ];then
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
-                    $CTS_DIR/tools/build/pack.py -t cordova -s $cordova_dir -d $CORDOVA_TESTS_DIR/$1 --tools=$CTS_DIR/tools
+                    $CTS_DIR/tools/build/pack.py -t cordova -m $2 -s $cordova_dir -d ${cordova_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
                     [ $? -ne 0 ] && echo "[cordova] [$1] <$cordova>" >> $BUILD_LOG
                 elif [ $cordova_num -gt 1 ];then
                     echo "$cordova not unique !!!" >> $BUILD_LOG
@@ -347,15 +350,16 @@ pack_Cordova(){
 pack_Cordova_SampleApp(){
     #prepare_tools $1 cordova
     #if [ $? -eq 0 ];then
-        cd $CTS_DIR/tools/build/
-        rm -f *.apk
-        rm -f *.zip
+        pkg_space=`date +%s%N | md5sum | head -c 15`
+        rm -rf $CTS_DIR/tools/build/$pkg_space
+        mkdir $CTS_DIR/tools/build/$pkg_space
+        cd $CTS_DIR/tools/build/$pkg_space
         #clean_operator
         #multi_thread_pack 4
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
             read -u 100
             {
-                ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 3.6 --tools=$CTS_DIR/tools
+                ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 3.6 -m $2 --tools=$CTS_DIR/tools
                 [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] $cordova_sampleapp" >> $BUILD_LOG
                 echo -ne "\n" 1>&100
             }&
@@ -363,9 +367,9 @@ pack_Cordova_SampleApp(){
 
         wait
         #clean_operator
-        zip cordova3.6_sampleapp_${1}.zip *.apk && cp cordova3.6_sampleapp_${1}.zip $CORDOVA_TESTS_DIR/$1
-        rm -f *.apk
-        rm -f *.zip
+        zip cordova3.6_sampleapp_${1}.zip *.apk && cp cordova3.6_sampleapp_${1}.zip ${cordova_path_arr[$2]}/$1
+        cd -
+        rm -rf $CTS_DIR/tools/build/$pkg_space
         
     #fi
 
@@ -419,13 +423,13 @@ pack_Aio(){
                     cd $aio_dir
                     rm -f *.zip
                     if [ $1 = "apk" ];then
-                        ./pack.sh -a $2 -m $3
+                        ./pack.sh -a $2 -m $3 -d ${tests_path_arr[$3]}/$2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
-                        mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
+                        #mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
                     elif [ $1 = "cordova" ];then
-                        ./pack.sh -t cordova
-                        [ $? -ne 0 ] && echo "[aio] [$1] [$2] <$aio>" >> $BUILD_LOG
-                        mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
+                        ./pack.sh -t $1 -m $3 -d ${cordova_path_arr[$3]}/$2
+                        [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
+                        #mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
                     fi
                 elif [ $aio_num -gt 1 ];then
                     echo "$aio not unique !!!" >> $BUILD_LOG
@@ -463,7 +467,7 @@ save_Package(){
         fulltest_dir=/mnt/otcqa/$wdir/master/"ww"$wweek"."$wtoday/FullTest
         mkdir -p $fulltest_dir
         cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
-        cp -r $CORDOVA_TESTS_DIR $fulltest_dir/
+        cp -r $CORDOVA_EMBEDDED_DIR $fulltest_dir/
         chmod -R 777 $fulltest_dir
         mail_pkg_address=$wdir/master/"ww"$wweek"."$wtoday/FullTest
         python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID master DL
@@ -500,14 +504,17 @@ prepare_tools x86 apk
 prepare_tools x86 cordova
 
 
-pack_Cordova x86 &
+pack_Cordova x86 embedded &
+pack_Cordova x86 shared &
+pack_Cordova_SampleApp x86 embedded &
+pack_Cordova_SampleApp x86 shared &
 pack_Apk x86 embedded &
 pack_Apk x86 shared &
-pack_Embeddingapi x86 embedded &
-pack_Cordova_SampleApp x86 &
-pack_Aio cordova x86 &
+pack_Aio cordova x86 embedded &
+pack_Aio cordova x86 shared &
 pack_Aio apk x86 embedded &
 pack_Aio apk x86 shared &
+pack_Embeddingapi x86 embedded &
 wait
 
 pack_Embeddingapi x86 shared &
@@ -518,14 +525,17 @@ prepare_tools arm embeddingapi
 prepare_tools arm apk
 prepare_tools arm cordova
 
+pack_Cordova arm embedded &
+pack_Cordova arm shared &
+pack_Cordova_SampleApp arm embedded &
+pack_Cordova_SampleApp arm shared &
 pack_Apk arm embedded &
 pack_Apk arm shared &
-pack_Cordova arm &
-pack_Embeddingapi arm embedded &
-pack_Aio cordova arm &
+pack_Aio cordova arm embedded &
+pack_Aio cordova arm shared &
 pack_Aio apk arm shared &
 pack_Aio apk arm embedded &
-pack_Cordova_SampleApp arm &
+pack_Embeddingapi arm embedded &
 wait
 
 

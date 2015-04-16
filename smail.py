@@ -24,7 +24,7 @@ def send_mail(vnum,address):
     #if str(branchnum).startswith('Crosswalk') or (branchnum == "master" and wk_today == 5):
     if str(sys.argv[5]).strip() == "DL":
         sto = 'jiajiax.li@intel.com,leix.wang@intel.com,jianhuix.a.yue@intel.com,xiax.li@intel.com,yunxiaox.lv@intel.com,canx.cao@intel.com,huihuix.z.sun@intel.com'
-        scc = 'yunfeix.hao@intel.com,jenny.q.cao@intel.com'
+        scc = 'yunfeix.hao@intel.com,jenny.q.cao@intel.com,tina.zhao@intel.com'
         pkgaddress = "http://otcqa.sh.intel.com/qa-auto/live/Xwalk-testsuites/"+address
         mail_title = "DL team"
     #elif branchnum == "master" and wk_today != 5:
@@ -32,7 +32,7 @@ def send_mail(vnum,address):
         #sto = 'jiajiax.li@intel.com'
         #scc = 'jiajiax.li@intel.com'
         sto = 'jiajiax.li@intel.com,fengx.dai@intel.com,junx.b.li@intel.com,yugang.fan@intel.com'
-        scc = 'xiaoyux.zhang@intel.com,jenny.q.cao@intel.com,deyix.liu@intel.com'
+        scc = 'xiaoyux.zhang@intel.com,jenny.q.cao@intel.com,deyix.liu@intel.com,tina.zhao@intel.com'
         pkgaddress = "http://jiaxxx-dev.sh.intel.com/ForNightlyAutoTest/"+address
         mail_title = "Nightly"
         
@@ -69,7 +69,7 @@ def send_mail(vnum,address):
         logfile_dir = os.path.join(root_dir, "logs", log_file)
         att1 = MIMEText(open(logfile_dir, 'rb').read(), 'base64', 'gb2312')
         att1["Content-Type"] = 'application/octet-stream'
-        att1["Content-Disposition"] = 'attachment; filename="packed_failed_suites_list.log"'
+        att1["Content-Disposition"] = 'attachment; filename="failed_suites_list.log"'
         msg.attach(att1)
 
     msg['Subject'] = 'The test suites of %s version were built done !'%vnum

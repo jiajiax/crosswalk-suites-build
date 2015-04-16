@@ -356,13 +356,13 @@ pack_Aio(){
                     cd $aio_dir
                     rm -f *.zip
                     if [ $1 = "apk" ];then
-                        ./pack.sh -a $2 -m $3
+                        ./pack.sh -a $2 -m $3 -d $CORDOVA_TESTS_DIR/$2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
-                        mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
+                        #mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
                     elif [ $1 = "cordova" ];then
-                        ./pack.sh -t cordova
-                        [ $? -ne 0 ] && echo "[aio] [$1] [$2] <$aio>" >> $BUILD_LOG
-                        mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
+                        ./pack.sh -t $2 -d $CORDOVA_TESTS_DIR/$2
+                        [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
+                        #mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
                     fi
                 elif [ $aio_num -gt 1 ];then
                     echo "$aio not unique !!!" >> $BUILD_LOG
@@ -449,9 +449,9 @@ prepare_tools arm embeddingapi
 prepare_tools arm apk
 prepare_tools arm cordova
 
+pack_Cordova arm &
 pack_Apk arm embedded &
 pack_Apk arm shared &
-pack_Cordova arm &
 pack_Embeddingapi arm embedded &
 pack_Aio cordova arm &
 pack_Aio apk arm embedded &

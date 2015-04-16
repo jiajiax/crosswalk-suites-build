@@ -123,9 +123,11 @@ sync_Code(){
     cd $DEMOEX_DIR ; git reset --hard HEAD ;git checkout master ;git pull ;cd -
     #cd $CTS_DIR ; git reset --hard HEAD; git checkout master; cd -
     cd $CTS_DIR ; git reset --hard HEAD;git checkout $BRANCH_NAME ;git pull ;git stash apply stash@{0}
-    cd $CTS_DIR/tools/cordova ; git reset --hard HEAD;git checkout master ;git pull ;git stash apply stash@{0}
+    cd $CTS_DIR/tools/cordova ; git reset --hard HEAD;git checkout 4.0.x ;git pull ;git stash apply stash@{0}
     cd $CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine;git reset --hard HEAD;git checkout master;git pull
     cd $CTS_DIR/tools/cordova_plugins/cordova-plugin-whitelist;git pull
+    cd $CTS_DIR
+    RELEASE_COMMIT_ID=$(git log -1 --pretty=oneline | awk '{print $1}')
     
 }
 
@@ -220,7 +222,7 @@ pack_Cordova(){
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
                 if [ $cordova_num -eq 1 ];then
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
-                    $CTS_DIR/tools/build/pack.py -t cordova --sub-version 4.0 -s $cordova_dir -d $CORDOVA_TESTS_DIR/$1 --tools=$CTS_DIR/tools
+                    $CTS_DIR/tools/build/pack.py -t cordova --sub-version 4.0 -a $1 -s $cordova_dir -d $CORDOVA_TESTS_DIR/$1 --tools=$CTS_DIR/tools
                     [ $? -ne 0 ] && echo "[cordova] [$1] <$cordova>" >> $BUILD_LOG
                 elif [ $cordova_num -gt 1 ];then
                     echo "$cordova not unique !!!" >> $BUILD_LOG
@@ -248,7 +250,7 @@ pack_Cordova_SampleApp(){
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
             read -u 113
             {
-                ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 4.0 --tools=$CTS_DIR/tools
+                ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 4.0 -a $1 --tools=$CTS_DIR/tools
                 [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] $cordova_sampleapp" >> $BUILD_LOG
                 echo -ne "\n" 1>&113
             }&
@@ -256,7 +258,7 @@ pack_Cordova_SampleApp(){
 
         wait
         #clean_operator
-        zip cordova3.6_sampleapp_${1}.zip *.apk && cp cordova3.6_sampleapp_${1}.zip $CORDOVA_TESTS_DIR/$1
+        zip cordova4.0_sampleapp_${1}.zip *.apk && cp cordova4.0_sampleapp_${1}.zip $CORDOVA_TESTS_DIR/$1
         rm -f *.apk
         rm -f *.zip
         
@@ -283,7 +285,7 @@ pack_Aio(){
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                         mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
                     elif [ $1 = "cordova" ];then
-                        ./pack.sh -t cordova
+                        ./pack.sh -t cordova -a $2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] <$aio>" >> $BUILD_LOG
                         mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
                     fi
@@ -316,7 +318,7 @@ save_Package(){
     fulltest_dir=/mnt/otcqa/$wdir/beta/"ww"$wweek"."$wtoday/$VERSION_NO"~"$complete_time
     mkdir -p $fulltest_dir
     cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
-    cp -r $CORDOVA_TESTS_DIR'*' $fulltest_dir/
+    cp -r $CORDOVA_TESTS_DIR/../testsuites-cordova* $fulltest_dir/
     chmod -R 777 $fulltest_dir
     mail_pkg_address=$wdir/beta/"ww"$wweek"."$wtoday/$VERSION_NO"~"$complete_time
     python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID $BRANCH_NAME DL
@@ -341,11 +343,19 @@ clean_operator
 multi_thread_pack 8
 
 
+cd $CTS_DIR/tools/build/
+./pack_cordova_sample.py -n helloworld --cordova-version 4.0 --tools=$CTS_DIR/tools
+[ $? -eq 0 ] && rm *.apk
+
 
 #pack_Cordova x86 &
 #pack_Aio cordova x86 &
 #pack_Cordova_SampleApp x86 &
 #wait
+pack_Cordova x86 &
+pack_Aio cordova x86 &
+pack_Cordova_SampleApp x86 &
+wait
 
 pack_Cordova arm &
 pack_Aio cordova arm &
