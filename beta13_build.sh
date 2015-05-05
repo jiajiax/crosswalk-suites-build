@@ -356,7 +356,7 @@ pack_Aio(){
                     cd $aio_dir
                     rm -f *.zip
                     if [ $1 = "apk" ];then
-                        ./pack.sh -a $2 -m $3 -d $CORDOVA_TESTS_DIR/$2
+                        ./pack.sh -a $2 -m $3 -d ${tests_path_arr[$3]}/$2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                         #mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
                     elif [ $1 = "cordova" ];then
@@ -376,7 +376,6 @@ pack_Aio(){
         wait
         #clean_operator
     #fi    
-
 
 }
 

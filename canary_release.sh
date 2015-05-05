@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Authors: Li, Jiajia <jiajiax.li@intel.com>
+
 PATH=/usr/java/sdk/tools:/usr/java/sdk/platform-tools:/usr/java/jdk1.7.0_67/bin:/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/share/apache-maven/bin
 
 ROOT_DIR=$(dirname $(readlink -f $0))
@@ -17,24 +19,38 @@ wweek=$(date +"%W" -d "+1 weeks")
 WW_DIR=/data/TestSuites_Storage/live
 . $ROOT_DIR/list_suites/release_list
 
-echo "Begin flag ---------------- `date` ---------------" > $BUILD_LOG
+echo "Begin flag:" > $BUILD_LOG
+echo "---------------- `date` ---------------" >> $BUILD_LOG 
 
-CORDOVA_SAMPLEAPP_LIST="mobilespec
+CORDOVA3_SAMPLEAPP_LIST="mobilespec
 helloworld
 remotedebugging
 gallery"
 
 
+CORDOVA4_SAMPLEAPP_LIST="helloworld
+remotedebugging
+gallery"
+
+CORDOVA4.0_CONFIG=$CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine/src/android/xwalk_core_library/xwalk.gradle
+
+CORDOVA_SAMPLEAPP_LIST=""
+
+
 NEW_VERSION_FLAG=0
 SUITE_DIR=""
 declare -A tests_path_arr
-declare -A cordova_path_arr
+declare -A cordova3_path_arr
+declare -A cordova4_path_arr
 EMBEDDED_TESTS_DIR=""
 SHARED_TESTS_DIR=""
 TIZEN_TESTS_DIR=""
 ANDROID_IN_PROCESS_FLAG=""
 TIZEN_IN_PROCESS_FLAG=""
 RELEASE_COMMIT_ID=""
+CORDOVA3_EMBEDDED_DIR=""
+CORDOVA3_SHARED_DIR=""
+CORDOVA4_EMBEDDED_DIR=""
 
 #while true;do
 #    build_flag=$(ls -al $VERSION_FLAG | awk '{print $7}')
@@ -58,23 +74,26 @@ init_ww(){
     [ -d $1/android/master/$VERSION_NO ] && rm -rf $1/android/master/$VERSION_NO
     if [ $(date +%w) -eq 3 ];then
         [ -d $1/tizen-common/master/$VERSION_NO ] && rm -rf $1/tizen-common/master/$VERSION_NO
-        mkdir -p $1/{android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm}},beta},tizen-common/master/$VERSION_NO}
+        mkdir -p $1/{android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm},cordova4.0-embedded/{x86,arm}},beta},tizen-common/master/$VERSION_NO}
         TIZEN_TESTS_DIR=$1/tizen-common/master/$VERSION_NO
         TIZEN_IN_PROCESS_FLAG=$TIZEN_TESTS_DIR/BUILD-INPROCESS
         [ ! -f $TIZEN_IN_PROCESS_FLAG ] && touch $TIZEN_IN_PROCESS_FLAG
     else
-        mkdir -p $1/android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm}},beta}
+        mkdir -p $1/android/{master/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm},cordova4.0-embedded/{x86,arm}},beta}
     fi
     
     EMBEDDED_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-embedded/
     SHARED_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-shared/
     #CORDOVA_TESTS_DIR=$1/android/master/$VERSION_NO/testsuites-cordova3.6/
-    CORDOVA_EMBEDDED_DIR=$1/android/master/$VERSION_NO/cordova3.6-embedded/
-    CORDOVA_SHARED_DIR=$1/android/master/$VERSION_NO/cordova3.6-shared/
+    CORDOVA3_EMBEDDED_DIR=$1/android/master/$VERSION_NO/cordova3.6-embedded/
+    CORDOVA3_SHARED_DIR=$1/android/master/$VERSION_NO/cordova3.6-shared/
+    CORDOVA4_EMBEDDED_DIR=$1/android/master/$VERSION_NO/cordova4.0-embedded/
+    CORDOVA4_SHARED_DIR=$1/android/master/$VERSION_NO/cordova4.0-shared/
     ANDROID_IN_PROCESS_FLAG=$1/android/master/$VERSION_NO/BUILD-INPROCESS
     [ ! -f $ANDROID_IN_PROCESS_FLAG ] && touch $ANDROID_IN_PROCESS_FLAG
     tests_path_arr=([embedded]=$EMBEDDED_TESTS_DIR [shared]=$SHARED_TESTS_DIR)
-    cordova_path_arr=([embedded]=$CORDOVA_EMBEDDED_DIR [shared]=$CORDOVA_SHARED_DIR)
+    cordova3_path_arr=([embedded]=$CORDOVA3_EMBEDDED_DIR [shared]=$CORDOVA3_SHARED_DIR)
+    cordova4_path_arr=([embedded]=$CORDOVA4_EMBEDDED_DIR [shared]=$CORDOVA4_SHARED_DIR)
 
 }
 
@@ -101,15 +120,37 @@ prepare_tools(){
             fi
         fi
 
-        if [[ $2 == "cordova" ]];then
+        if [[ $2 == "cordova3.6" ]];then
             if [ -d $PKG_TOOLS/crosswalk-cordova-$VERSION_NO-$1 ];then
                 rm -rf cordova
+                rm -rf cordova_plugins
                 cp -a $PKG_TOOLS/crosswalk-cordova-$VERSION_NO-$1 cordova
+                cp -a $PKG_TOOLS/cordova_plugins_3.6 cordova_plugins
             else
                 echo "[tools] crosswalk-cordova-$VERSION_NO-$1 not exist !!!" >> $BUILD_LOG
                 return 1
 
             fi
+        fi
+
+        if [[ $2 == "cordova4.0" ]];then
+                rm -rf cordova
+                rm -rf cordova_plugins
+                cp -a $PKG_TOOLS/cordova_plugins_4.0 cordova_plugins
+                cp -a $PKG_TOOLS/cordova_4.0 cordova
+
+                #cd $CTS_DIR/tools/cordova ; git reset --hard HEAD;git checkout 4.0.x ;git pull ;git stash apply stash@{0}
+                #cd $CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine;git reset --hard HEAD;git checkout master;git pull
+                cd $CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine;git reset --hard HEAD;git checkout master;git pull
+                #cd $CTS_DIR/tools/cordova_plugins/cordova-plugin-whitelist;git pull
+                sed -i "s/:13+/:$VERSION_NO/g" $CORDOVA4.0_CONFIG
+                sed -i 's/_beta:/:/g' $CORDOVA4.0_CONFIG
+                begin_line=`sed -n '/  maven {/=' $CORDOVA4.0_CONFIG`
+                end_line=$[$begin_line + 2]
+                sed -i "${begin_line},${end_line}d" $CORDOVA4.0_CONFIG
+                sed -i "${begin_line}i\  mavenLocal()" $CORDOVA4.0_CONFIG
+
+                mvn install:install-file -DgroupId=org.xwalk -DartifactId=xwalk_core_library -Dversion=${VERSION_NO} -Dpackaging=aar  -Dfile=${PKG_TOOLS}/crosswalk-${VERSION_NO}.aar -DgeneratePom=true
         fi
 
         if [[ $2 == "embeddingapi" ]];then
@@ -330,8 +371,12 @@ pack_Cordova(){
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
                 if [ $cordova_num -eq 1 ];then
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
-                    $CTS_DIR/tools/build/pack.py -t cordova -m $2 -s $cordova_dir -d ${cordova_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
-                    [ $? -ne 0 ] && echo "[cordova] [$1] <$cordova>" >> $BUILD_LOG
+                    if [ $3 = "3.6" ];then
+                        $CTS_DIR/tools/build/pack.py -t cordova --sub-version $3 -m $2 -s $cordova_dir -d ${cordova3_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
+                    elif [ $3 = "4.0" ];then
+                        $CTS_DIR/tools/build/pack.py -t cordova --sub-version $3 -a $1 -s $cordova_dir -d ${cordova4_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
+                    fi
+                    [ $? -ne 0 ] && echo "[cordova] [$1] [$3]<$cordova>" >> $BUILD_LOG
                 elif [ $cordova_num -gt 1 ];then
                     echo "$cordova not unique !!!" >> $BUILD_LOG
                 else
@@ -356,10 +401,16 @@ pack_Cordova_SampleApp(){
         cd $CTS_DIR/tools/build/$pkg_space
         #clean_operator
         #multi_thread_pack 4
+        [ $3 = "3.6" ] && CORDOVA_SAMPLEAPP_LIST=$CORDOVA3_SAMPLEAPP_LIST
+        [ $3 = "4.0" ] && CORDOVA_SAMPLEAPP_LIST=$CORDOVA4_SAMPLEAPP_LIST
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
             read -u 100
             {
-                ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version 3.6 -m $2 --tools=$CTS_DIR/tools
+                if [ $3 = "3.6" ];then
+                    ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -m $2 --tools=$CTS_DIR/tools
+                elif [ $3 = "4.0" ];then
+                    ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -a $1 --tools=$CTS_DIR/tools
+                fi
                 [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] $cordova_sampleapp" >> $BUILD_LOG
                 echo -ne "\n" 1>&100
             }&
@@ -367,7 +418,11 @@ pack_Cordova_SampleApp(){
 
         wait
         #clean_operator
-        zip cordova3.6_sampleapp_${1}.zip *.apk && cp cordova3.6_sampleapp_${1}.zip ${cordova_path_arr[$2]}/$1
+        if [ $3 = "3.6" ];then
+            zip cordova${3}_sampleapp_${1}.zip *.apk && cp cordova${3}_sampleapp_${1}.zip ${cordova3_path_arr[$2]}/$1
+        elif [ $3 = "4.0" ];then
+            zip cordova${3}_sampleapp_${1}.zip *.apk && cp cordova${3}_sampleapp_${1}.zip ${cordova4_path_arr[$2]}/$1
+        fi
         cd -
         rm -rf $CTS_DIR/tools/build/$pkg_space
         
@@ -426,10 +481,13 @@ pack_Aio(){
                         ./pack.sh -a $2 -m $3 -d ${tests_path_arr[$3]}/$2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                         #mv ${aio}-${VERSION_NO}-1.apk.zip ${tests_path_arr[$3]}/$2
-                    elif [ $1 = "cordova" ];then
-                        ./pack.sh -t $1 -m $3 -d ${cordova_path_arr[$3]}/$2
+                    elif [ $1 = "cordova3.6" ];then
+                        ./pack.sh -t cordova -m $3 -d ${cordova3_path_arr[$3]}/$2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                         #mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
+                    elif [ $1 = "cordova4.0" ];then
+                        ./pack.sh -t cordova -a $2 -d ${cordova4_path_arr[$3]}/$2
+                        [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                     fi
                 elif [ $aio_num -gt 1 ];then
                     echo "$aio not unique !!!" >> $BUILD_LOG
@@ -466,7 +524,8 @@ save_Package(){
     if [ $wtoday -eq 5 ];then
         fulltest_dir=/mnt/otcqa/$wdir/master/"ww"$wweek"."$wtoday/FullTest
         mkdir -p $fulltest_dir
-        cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
+        #cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
+        cp -r $CORDOVA3_EMBEDDED_DIR/../cordova* $fulltest_dir/
         cp -r $CORDOVA_EMBEDDED_DIR $fulltest_dir/
         chmod -R 777 $fulltest_dir
         mail_pkg_address=$wdir/master/"ww"$wweek"."$wtoday/FullTest
@@ -501,17 +560,9 @@ fi
 
 prepare_tools x86 embeddingapi
 prepare_tools x86 apk
-prepare_tools x86 cordova
 
-
-pack_Cordova x86 embedded &
-pack_Cordova x86 shared &
-pack_Cordova_SampleApp x86 embedded &
-pack_Cordova_SampleApp x86 shared &
 pack_Apk x86 embedded &
 pack_Apk x86 shared &
-pack_Aio cordova x86 embedded &
-pack_Aio cordova x86 shared &
 pack_Aio apk x86 embedded &
 pack_Aio apk x86 shared &
 pack_Embeddingapi x86 embedded &
@@ -520,34 +571,64 @@ wait
 pack_Embeddingapi x86 shared &
 wait
 
-
 prepare_tools arm embeddingapi
 prepare_tools arm apk
-prepare_tools arm cordova
 
-pack_Cordova arm embedded &
-pack_Cordova arm shared &
-pack_Cordova_SampleApp arm embedded &
-pack_Cordova_SampleApp arm shared &
 pack_Apk arm embedded &
 pack_Apk arm shared &
-pack_Aio cordova arm embedded &
-pack_Aio cordova arm shared &
 pack_Aio apk arm shared &
 pack_Aio apk arm embedded &
 pack_Embeddingapi arm embedded &
 wait
 
-
 pack_Embeddingapi arm shared &
+wait
+
+rm -f $ANDROID_IN_PROCESS_FLAG
+echo "Delete the file 'BUILD-INPROCESS':" >> $BUILD_LOG
+echo " ---------------- `date`------------------" >> $BUILD_LOG
+
+prepare_tools x86 cordova3.6
+
+pack_Cordova x86 embedded 3.6 &
+pack_Cordova x86 shared 3.6 &
+pack_Cordova_SampleApp x86 embedded 3.6 &
+pack_Cordova_SampleApp x86 shared 3.6 &
+pack_Aio cordova3.6 x86 embedded &
+pack_Aio cordova3.6 x86 shared &
+wait
+
+
+prepare_tools arm cordova3.6
+
+pack_Cordova arm embedded 3.6 &
+pack_Cordova arm shared 3.6 &
+pack_Cordova_SampleApp arm embedded 3.6 &
+pack_Cordova_SampleApp arm shared 3.6 &
+pack_Aio cordova3.6 arm embedded &
+pack_Aio cordova3.6 arm shared &
+wait
+
+
+
+
+prepare_tools x86 cordova4.0
+cd $CTS_DIR;git stash apply stash@{0}
+
+pack_Cordova x86 embedded 4.0 &
+pack_Cordova arm embedded 4.0 &
+pack_Cordova_SampleApp x86 embedded 4.0 &
+pack_Cordova_SampleApp arm embedded 4.0 &
+pack_Aio cordova4.0 x86 embedded &
+pack_Aio cordova4.0 arm embedded &
 wait
 
 
 clean_operator
 
 copy_SDK
-rm -f $ANDROID_IN_PROCESS_FLAG
-echo "End flag ---------------- `date`------------------" >> $BUILD_LOG
+echo "End flag:" >> $BUILD_LOG
+echo "---------------- `date`------------------" >> $BUILD_LOG
 
 save_Package
 
