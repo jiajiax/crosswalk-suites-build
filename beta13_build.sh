@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Authors: Li, Jiajia <jiajiax.li@intel.com>
+
 PATH=/usr/java/sdk/tools:/usr/java/sdk/platform-tools:/usr/java/jdk1.7.0_67/bin:/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/share/apache-maven/bin
 
 ROOT_DIR=$(dirname $(readlink -f $0))

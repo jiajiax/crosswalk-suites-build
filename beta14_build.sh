@@ -6,18 +6,18 @@ PATH=/usr/java/sdk/tools:/usr/java/sdk/platform-tools:/usr/java/jdk1.7.0_67/bin:
 
 ROOT_DIR=$(dirname $(readlink -f $0))
 SHARED_SPACE_DIR=/mnt/jiajiax_shared/release
-CTS_DIR=$ROOT_DIR/../work_space/release/crosswalk-test-suite
+CTS_DIR=$ROOT_DIR/../work_space/release/crosswalk-test-suite-14
 DEMOEX_DIR=$CTS_DIR/../demo-express
 LOG_DIR=$ROOT_DIR/logs
-RELEASE_COMMIT_FILE=$LOG_DIR/$(date +%Y-%m-%d-%T)_release
-VERSION_FLAG=$ROOT_DIR/version_flag/Canary_New_Number
+#RELEASE_COMMIT_FILE=$LOG_DIR/$(date +%Y-%m-%d-%T)_release
+VERSION_FLAG=$ROOT_DIR/version_flag/Beta14_Number
 VERSION_NO=$(cat $VERSION_FLAG)
-BUILD_LOG=$LOG_DIR/canary_error_${VERSION_NO}.log
+BUILD_LOG=$LOG_DIR/beta_error_${VERSION_NO}.log
 PKG_TOOLS=$CTS_DIR/../pkg_tools/
 SAMPLE_LIST=""
 wweek=$(date +"%W" -d "+1 weeks")
 WW_DIR=/data/TestSuites_Storage/live
-. $SHARED_SPACE_DIR/list_suites/release_list
+. $SHARED_SPACE_DIR/list_suites/beta14_list
 
 echo "Begin flag:" > $BUILD_LOG
 echo "---------------- `date` ---------------" >> $BUILD_LOG 
@@ -32,7 +32,7 @@ CORDOVA4_SAMPLEAPP_LIST="helloworld
 remotedebugging
 gallery"
 
-CORDOVA4_CONFIG=$CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview/src/android/xwalk.gradle
+CORDOVA4_CONFIG="$CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview/src/android/xwalk.gradle"
 
 CORDOVA_SAMPLEAPP_LIST=""
 
@@ -51,9 +51,8 @@ RELEASE_COMMIT_ID=""
 CORDOVA3_EMBEDDED_DIR=""
 CORDOVA3_SHARED_DIR=""
 CORDOVA4_EMBEDDED_DIR=""
-CORDOVA4_SHARED_DIR=""
-BRANCH_TYPE="master"
-BRANCH_NAME="master"
+BRANCH_TYPE="beta"
+BRANCH_NAME="Crosswalk-14"
 
 #while true;do
 #    build_flag=$(ls -al $VERSION_FLAG | awk '{print $7}')
@@ -75,19 +74,10 @@ BRANCH_NAME="master"
 init_ww(){
     
     [ -d $1/android/$BRANCH_TYPE/$VERSION_NO ] && rm -rf $1/android/$BRANCH_TYPE/$VERSION_NO
-    if [ $(date +%w) -eq 3 ];then
-        [ -d $1/tizen-common/$BRANCH_TYPE/$VERSION_NO ] && rm -rf $1/tizen-common/$BRANCH_TYPE/$VERSION_NO
-        mkdir -p $1/{android/{$BRANCH_TYPE/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm},cordova4.0-embedded/{x86,arm}},beta},tizen-common/$BRANCH_TYPE/$VERSION_NO}
-        TIZEN_TESTS_DIR=$1/tizen-common/$BRANCH_TYPE/$VERSION_NO
-        TIZEN_IN_PROCESS_FLAG=$TIZEN_TESTS_DIR/BUILD-INPROCESS
-        [ ! -f $TIZEN_IN_PROCESS_FLAG ] && touch $TIZEN_IN_PROCESS_FLAG
-    else
-        mkdir -p $1/android/{$BRANCH_TYPE/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm},cordova4.0-embedded/{x86,arm}},beta}
-    fi
+    mkdir -p $1/android/$BRANCH_TYPE/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm},cordova4.0-embedded/{x86,arm}}
     
     EMBEDDED_TESTS_DIR=$1/android/$BRANCH_TYPE/$VERSION_NO/testsuites-embedded/
     SHARED_TESTS_DIR=$1/android/$BRANCH_TYPE/$VERSION_NO/testsuites-shared/
-    #CORDOVA_TESTS_DIR=$1/android/$BRANCH_TYPE/$VERSION_NO/testsuites-cordova3.6/
     CORDOVA3_EMBEDDED_DIR=$1/android/$BRANCH_TYPE/$VERSION_NO/cordova3.6-embedded/
     CORDOVA3_SHARED_DIR=$1/android/$BRANCH_TYPE/$VERSION_NO/cordova3.6-shared/
     CORDOVA4_EMBEDDED_DIR=$1/android/$BRANCH_TYPE/$VERSION_NO/cordova4.0-embedded/
@@ -176,23 +166,25 @@ prepare_tools(){
 sync_Code(){
     # Get latest code from github
     cd $DEMOEX_DIR ; git reset --hard HEAD ;git checkout master ;git pull ;cd -
-    #cd $CTS_DIR ; git reset --hard HEAD; git checkout master; cd -
-    if [ $(date +%w) -eq 3 ];then
-        cd $CTS_DIR
-        git reset --hard HEAD
-        git checkout $BRANCH_NAME
-        git pull
-        echo "---------- Release Commit -------">>$RELEASE_COMMIT_FILE
-        git log -1 --name-status >>$RELEASE_COMMIT_FILE
-        echo "---------------------------------">>$RELEASE_COMMIT_FILE
-        RELEASE_COMMIT_ID=$(git log -1 --pretty=oneline | awk '{print $1}')
-        echo $RELEASE_COMMIT_ID > $SHARED_SPACE_DIR/Release_ID
-        cd -
-        cat $RELEASE_COMMIT_FILE | mutt -s "$wweek Week Release Commit" jiajiax.li@intel.com
-    else
-        RELEASE_COMMIT_ID=`cat $SHARED_SPACE_DIR/Release_ID`
-        cd $CTS_DIR ; git reset --hard HEAD;git checkout $BRANCH_NAME;git pull ;git reset --hard $RELEASE_COMMIT_ID;cd -
-    fi
+    cd $CTS_DIR ; git reset --hard HEAD; git checkout $BRANCH_NAME ;git pull ;cd -
+    cd $CTS_DIR
+    RELEASE_COMMIT_ID=$(git log -1 --pretty=oneline | awk '{print $1}')
+    cd -
+    #if [ $(date +%w) -eq 3 ];then
+    #    cd $CTS_DIR
+    #    git reset --hard HEAD
+    #    git checkout master
+    #    git pull
+    #    echo "---------- Release Commit -------">>$RELEASE_COMMIT_FILE
+    #    git log -1 --name-status >>$RELEASE_COMMIT_FILE
+    #    echo "---------------------------------">>$RELEASE_COMMIT_FILE
+    #    echo $RELEASE_COMMIT_ID > $SHARED_SPACE_DIR/Release_ID
+    #    cd -
+    #    cat $RELEASE_COMMIT_FILE | mutt -s "$wweek Week Release Commit" jiajiax.li@intel.com
+    #else
+    #    RELEASE_COMMIT_ID=`cat $SHARED_SPACE_DIR/Release_ID`
+    #    cd $CTS_DIR ; git reset --hard HEAD;git checkout master;git pull ;git reset --hard $RELEASE_COMMIT_ID;cd -
+    #fi
 }
 
 
@@ -252,13 +244,13 @@ recover_Tests(){
 }
 
 multi_thread_pack(){
-    trap "exec 100>&-;exec 100<&-;exit 0" 2
+    trap "exec 114>&-;exec 114<&-;exit 0" 2
 
     mkfifo $CTS_DIR/operator_tmp
-    exec 100<>$CTS_DIR/operator_tmp
+    exec 114<>$CTS_DIR/operator_tmp
     
     for ((i=1;i<=$1;i++));do
-        echo -ne "\n" 1>&100
+        echo -ne "\n" 1>&114
     done
 
 }
@@ -267,8 +259,8 @@ clean_operator(){
 
     
     rm -f $CTS_DIR/operator_tmp
-    exec 100>$-
-    exec 100<$-
+    exec 114>$-
+    exec 114<$-
 
 }
 
@@ -292,7 +284,7 @@ pack_Wgt(){
     #clean_operator
     #multi_thread_pack 10
     for wgt in $WGTLIST;do
-        read -u 100
+        read -u 114
         {
             wgt_num=`find $CTS_DIR -name $wgt -type d | wc -l`
             if [ $wgt_num -eq 1 ];then
@@ -304,7 +296,7 @@ pack_Wgt(){
             else
                 echo "$1 not exists !!!" >> $BUILD_LOG
             fi
-             echo -ne "\n" 1>&100
+             echo -ne "\n" 1>&114
         }&
     done
     wait
@@ -338,7 +330,7 @@ pack_Apk(){
         #clean_operator
         #multi_thread_pack 5
         for apk in $APKLIST;do
-            read -u 100
+            read -u 114
             {
                 apk_num=`find $CTS_DIR -name $apk -type d | wc -l`
                 if [ $apk_num -eq 1 ];then
@@ -351,7 +343,7 @@ pack_Apk(){
                     echo "$apk not exists !!!" >> $BUILD_LOG
                 fi
 
-                echo -ne "\n" 1>&100
+                echo -ne "\n" 1>&114
             }&
         done
 
@@ -368,7 +360,7 @@ pack_Cordova(){
         #clean_operator
         #multi_thread_pack 5
         for cordova in $CORDOVALIST;do
-            read -u 100
+            read -u 114
             {
                 [ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33i\    <uses-permission android:name="android.permission.CAMERA" />' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
@@ -386,7 +378,7 @@ pack_Cordova(){
                     echo "$cordova not exists !!!" >> $BUILD_LOG
                 fi
                 [ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33d' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
-                echo -ne "\n" 1>&100
+                echo -ne "\n" 1>&114
             }&
         done
 
@@ -407,7 +399,7 @@ pack_Cordova_SampleApp(){
         [ $3 = "3.6" ] && CORDOVA_SAMPLEAPP_LIST=$CORDOVA3_SAMPLEAPP_LIST
         [ $3 = "4.0" ] && CORDOVA_SAMPLEAPP_LIST=$CORDOVA4_SAMPLEAPP_LIST
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
-            read -u 100
+            read -u 114
             {
                 if [ $3 = "3.6" ];then
                     ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -m $2 --tools=$CTS_DIR/tools
@@ -415,7 +407,7 @@ pack_Cordova_SampleApp(){
                     ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -a $1 --tools=$CTS_DIR/tools
                 fi
                 [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] $cordova_sampleapp" >> $BUILD_LOG
-                echo -ne "\n" 1>&100
+                echo -ne "\n" 1>&114
             }&
         done
 
@@ -439,7 +431,7 @@ pack_Embeddingapi(){
         #clean_operator
         #multi_thread_pack 2
         for emb_suite in $EMBEDDINGLIST;do
-            read -u 100
+            read -u 114
             {
                 emb_num=`find $CTS_DIR -name $emb_suite -type d | wc -l`
                 if [ $emb_num -eq 1 ];then
@@ -457,7 +449,7 @@ pack_Embeddingapi(){
                 else
                     echo "$emb_suite not exists !!!" >> $BUILD_LOG
                 fi
-                echo -ne "\n" 1>&100
+                echo -ne "\n" 1>&114
             }&
         done
         
@@ -473,7 +465,7 @@ pack_Aio(){
         #clean_operator
         #multi_thread_pack 3
         for aio in $AIOLIST;do
-            read -u 100
+            read -u 114
             {
                 aio_num=`find $CTS_DIR -name $aio -type d | wc -l`
                 if [ $aio_num -eq 1 ];then
@@ -497,7 +489,7 @@ pack_Aio(){
                 else
                     echo "$aio not exists !!!" >> $BUILD_LOG
                 fi
-                echo -ne "\n" 1>&100
+                echo -ne "\n" 1>&114
             }&
         done
 
@@ -510,7 +502,7 @@ pack_Aio(){
 
 copy_SDK(){
 
-    SDK_dir=$ROOT_DIR/../images/linux-ftp.sh.intel.com/pub/mirrors/01org/crosswalk/releases/crosswalk/android/canary/$VERSION_NO
+    SDK_dir=$ROOT_DIR/../images/linux-ftp.sh.intel.com/pub/mirrors/01org/crosswalk/releases/crosswalk/android/beta/$VERSION_NO
     WW_SDK_dir=$EMBEDDED_TESTS_DIR/../crosswalk-tools
     [ -d $SDK_dir ] && cp -a $SDK_dir $WW_SDK_dir
     touch $EMBEDDED_TESTS_DIR/../$RELEASE_COMMIT_ID 
@@ -518,28 +510,30 @@ copy_SDK(){
 }
 
 save_Package(){
+    end_time=$(date +%H%M%S)
     wtoday=$[$(date +%w)]
     wdir="WW"$wweek
 
     mail_pkg_address=android/$BRANCH_TYPE/$VERSION_NO
     python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID $BRANCH_NAME nightly
-    mkdir -p /mnt/otcqa/$wdir/{$BRANCH_TYPE/"ww"$wweek"."$wtoday,stable,webtestingservice}
-    if [ $wtoday -eq 5 ];then
-        fulltest_dir=/mnt/otcqa/$wdir/$BRANCH_TYPE/"ww"$wweek"."$wtoday/FullTest
+    mkdir -p /mnt/otcqa/$wdir/{$BRANCH_TYPE/"ww"$wweek"."$wtoday,beta/"ww"$wweek"."$wtoday,stable,webtestingservice}
+    #if [ $wtoday -eq 5 ];then
+        fulltest_dir=/mnt/otcqa/$wdir/$BRANCH_TYPE/"ww"$wweek"."$wtoday/$BRANCH_TYPE-$VERSION_NO~$end_time
         mkdir -p $fulltest_dir
-        #cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
+        cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
         cp -r $CORDOVA3_EMBEDDED_DIR/../cordova* $fulltest_dir/
-        cp -r $CORDOVA_EMBEDDED_DIR $fulltest_dir/
+        #cp -r $CORDOVA4_EMBEDDED_DIR $fulltest_dir/
         chmod -R 777 $fulltest_dir
-        mail_pkg_address=$wdir/$BRANCH_TYPE/"ww"$wweek"."$wtoday/FullTest
+        mail_pkg_address=$wdir/$BRANCH_TYPE/"ww"$wweek"."$wtoday/$BRANCH_TYPE-$VERSION_NO~$end_time
         python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID $BRANCH_NAME DL
-    fi    
+    #fi    
     
 }
 
 
 
 init_ww $WW_DIR
+#init_ww /home/orange/myspace/kkk
 sync_Code
 updateVersionNum
 
@@ -555,44 +549,15 @@ clean_operator
 multi_thread_pack 8
 
 
-if [ $(date +%w) -eq 3 ];then
-    pack_Wgt
-    pack_Xpk
-    rm $TIZEN_IN_PROCESS_FLAG
-fi
-
 prepare_tools x86 embeddingapi
 prepare_tools x86 apk
+prepare_tools x86 cordova3.6
 
 pack_Apk x86 embedded &
 pack_Apk x86 shared &
 pack_Aio apk x86 embedded &
 pack_Aio apk x86 shared &
 pack_Embeddingapi x86 embedded &
-wait
-
-pack_Embeddingapi x86 shared &
-wait
-
-prepare_tools arm embeddingapi
-prepare_tools arm apk
-
-pack_Apk arm embedded &
-pack_Apk arm shared &
-pack_Aio apk arm shared &
-pack_Aio apk arm embedded &
-pack_Embeddingapi arm embedded &
-wait
-
-pack_Embeddingapi arm shared &
-wait
-
-rm -f $ANDROID_IN_PROCESS_FLAG
-echo "Delete the file 'BUILD-INPROCESS':" >> $BUILD_LOG
-echo " ---------------- `date`------------------" >> $BUILD_LOG
-
-prepare_tools x86 cordova3.6
-
 pack_Cordova x86 embedded 3.6 &
 pack_Cordova x86 shared 3.6 &
 pack_Cordova_SampleApp x86 embedded 3.6 &
@@ -601,9 +566,18 @@ pack_Aio cordova3.6 x86 embedded &
 pack_Aio cordova3.6 x86 shared &
 wait
 
+pack_Embeddingapi x86 shared &
+wait
 
+prepare_tools arm embeddingapi
+prepare_tools arm apk
 prepare_tools arm cordova3.6
 
+pack_Apk arm embedded &
+pack_Apk arm shared &
+pack_Aio apk arm shared &
+pack_Aio apk arm embedded &
+pack_Embeddingapi arm embedded &
 pack_Cordova arm embedded 3.6 &
 pack_Cordova arm shared 3.6 &
 pack_Cordova_SampleApp arm embedded 3.6 &
@@ -612,6 +586,12 @@ pack_Aio cordova3.6 arm embedded &
 pack_Aio cordova3.6 arm shared &
 wait
 
+pack_Embeddingapi arm shared &
+wait
+
+#echo "Delete the file 'BUILD-INPROCESS':" >> $BUILD_LOG
+#echo " ---------------- `date`------------------" >> $BUILD_LOG
+
 
 
 
@@ -619,12 +599,10 @@ prepare_tools x86 cordova4.0
 #cd $CTS_DIR;git stash apply stash@{0}
 
 pack_Cordova x86 embedded 4.0 &
-pack_Cordova_SampleApp x86 embedded 4.0 &
-pack_Aio cordova4.0 x86 embedded &
-wait
-
 pack_Cordova arm embedded 4.0 &
+pack_Cordova_SampleApp x86 embedded 4.0 &
 pack_Cordova_SampleApp arm embedded 4.0 &
+pack_Aio cordova4.0 x86 embedded &
 pack_Aio cordova4.0 arm embedded &
 wait
 
@@ -632,6 +610,7 @@ wait
 clean_operator
 
 copy_SDK
+rm -f $ANDROID_IN_PROCESS_FLAG
 echo "End flag:" >> $BUILD_LOG
 echo "---------------- `date`------------------" >> $BUILD_LOG
 
