@@ -32,7 +32,7 @@ def send_mail(vnum,address):
         #sto = 'jiajiax.li@intel.com'
         #scc = 'jiajiax.li@intel.com'
         sto = 'jiajiax.li@intel.com,fengx.dai@intel.com,junx.b.li@intel.com,yugang.fan@intel.com'
-        scc = 'xiaoyux.zhang@intel.com,jenny.q.cao@intel.com,deyix.liu@intel.com,tina.zhao@intel.com'
+        scc = 'xiaoyux.zhang@intel.com,jenny.q.cao@intel.com,deyix.liu@intel.com,tina.zhao@intel.com,wanming.lin@intel.com'
         pkgaddress = "http://jiaxxx-dev.sh.intel.com/ForNightlyAutoTest/"+address
         mail_title = "Nightly"
         

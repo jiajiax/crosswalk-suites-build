@@ -127,8 +127,10 @@ prepare_tools(){
             if [ -d $PKG_TOOLS/crosswalk-cordova-$VERSION_NO-$1 ];then
                 rm -rf cordova
                 rm -rf cordova_plugins
+                rm -rf mobilespec
                 cp -a $PKG_TOOLS/crosswalk-cordova-$VERSION_NO-$1 cordova
                 cp -a $PKG_TOOLS/cordova_plugins_3.6 cordova_plugins
+                cp -a mobilespec_3.6 mobilespec
             else
                 echo "[tools] crosswalk-cordova-$VERSION_NO-$1 not exist !!!" >> $BUILD_LOG
                 return 1
@@ -139,7 +141,9 @@ prepare_tools(){
         if [[ $2 == "cordova4.0" ]];then
                 rm -rf cordova
                 rm -rf cordova_plugins
+                rm -rf mobilespec
                 cp -a $PKG_TOOLS/cordova_plugins_4.0 cordova_plugins
+                cp -a mobilespec_4.0 mobilespec
                 #cp -a $PKG_TOOLS/cordova_4.0 cordova
 
                 #cd $CTS_DIR/tools/cordova ; git reset --hard HEAD;git checkout 4.0.x ;git pull ;git stash apply stash@{0}
@@ -370,7 +374,7 @@ pack_Cordova(){
         for cordova in $CORDOVALIST;do
             read -u 100
             {
-                [ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33i\    <uses-permission android:name="android.permission.CAMERA" />' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
+                #[ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33i\    <uses-permission android:name="android.permission.CAMERA" />' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
                 if [ $cordova_num -eq 1 ];then
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
@@ -385,7 +389,7 @@ pack_Cordova(){
                 else
                     echo "$cordova not exists !!!" >> $BUILD_LOG
                 fi
-                [ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33d' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
+                #[ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33d' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
                 echo -ne "\n" 1>&100
             }&
         done
@@ -404,8 +408,8 @@ pack_Cordova_SampleApp(){
         cd $CTS_DIR/tools/build/$pkg_space
         #clean_operator
         #multi_thread_pack 4
-        [ $3 = "3.6" ] && CORDOVA_SAMPLEAPP_LIST=$CORDOVA3_SAMPLEAPP_LIST
-        [ $3 = "4.0" ] && CORDOVA_SAMPLEAPP_LIST=$CORDOVA4_SAMPLEAPP_LIST
+        CORDOVA_SAMPLEAPP_LIST=$CORDOVA3_SAMPLEAPP_LIST
+        #CORDOVA_SAMPLEAPP_LIST=$CORDOVA4_SAMPLEAPP_LIST
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
             read -u 100
             {
@@ -527,9 +531,9 @@ save_Package(){
     if [ $wtoday -eq 5 ];then
         fulltest_dir=/mnt/otcqa/$wdir/$BRANCH_TYPE/"ww"$wweek"."$wtoday/FullTest
         mkdir -p $fulltest_dir
-        #cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
+        cp -r $EMBEDDED_TESTS_DIR $fulltest_dir/
         cp -r $CORDOVA3_EMBEDDED_DIR/../cordova* $fulltest_dir/
-        cp -r $CORDOVA_EMBEDDED_DIR $fulltest_dir/
+        #cp -r $CORDOVA_EMBEDDED_DIR $fulltest_dir/
         chmod -R 777 $fulltest_dir
         mail_pkg_address=$wdir/$BRANCH_TYPE/"ww"$wweek"."$wtoday/FullTest
         python $ROOT_DIR/smail.py $VERSION_NO $mail_pkg_address $RELEASE_COMMIT_ID $BRANCH_NAME DL
@@ -616,7 +620,6 @@ wait
 
 
 prepare_tools x86 cordova4.0
-#cd $CTS_DIR;git stash apply stash@{0}
 
 pack_Cordova x86 embedded 4.0 &
 pack_Cordova_SampleApp x86 embedded 4.0 &

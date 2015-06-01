@@ -362,7 +362,7 @@ pack_Cordova(){
         for cordova in $CORDOVALIST;do
             read -u 114
             {
-                [ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33i\    <uses-permission android:name="android.permission.CAMERA" />' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
+                #[ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33i\    <uses-permission android:name="android.permission.CAMERA" />' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
                 cordova_num=`find $CTS_DIR -name $cordova -type d | wc -l`
                 if [ $cordova_num -eq 1 ];then
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
@@ -377,7 +377,7 @@ pack_Cordova(){
                 else
                     echo "$cordova not exists !!!" >> $BUILD_LOG
                 fi
-                [ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33d' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
+                #[ $cordova = "usecase-webapi-xwalk-tests" ] && sed -i '33d' $CTS_DIR/tools/cordova/bin/templates/project/AndroidManifest.xml
                 echo -ne "\n" 1>&114
             }&
         done
