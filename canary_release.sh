@@ -28,10 +28,6 @@ remotedebugging
 gallery"
 
 
-CORDOVA4_SAMPLEAPP_LIST="helloworld
-remotedebugging
-gallery"
-
 CORDOVA4_CONFIG=$CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview/src/android/xwalk.gradle
 
 CORDOVA_SAMPLEAPP_LIST=""
@@ -276,20 +272,20 @@ clean_operator(){
 
 }
 
-check_Suite(){
-    sum_suites=`find $CTS_DIR -name $1 -type d |wc -l`
-    if [ $sum_suites -eq 1 ];then
-        SUITE_DIR=`find $CTS_DIR -name $1 -type d`
-        echo $SUITE_DIR
-        return
-    elif [ $sum_suites -gt 1 ];then
-        echo "$1 not unique !!!" >> $BUILD_LOG
-        return 1
-    else
-        echo "$1 not exists !!!" >> $BUILD_LOG
-        return 1
-    fi
-}
+#check_Suite(){
+#    sum_suites=`find $CTS_DIR -name $1 -type d |wc -l`
+#    if [ $sum_suites -eq 1 ];then
+#        SUITE_DIR=`find $CTS_DIR -name $1 -type d`
+#        echo $SUITE_DIR
+#        return
+#    elif [ $sum_suites -gt 1 ];then
+#        echo "$1 not unique !!!" >> $BUILD_LOG
+#        return 1
+#    else
+#        echo "$1 not exists !!!" >> $BUILD_LOG
+#        return 1
+#    fi
+#}
 
 
 pack_Wgt(){
@@ -383,7 +379,7 @@ pack_Cordova(){
                     elif [ $3 = "4.0" ];then
                         $CTS_DIR/tools/build/pack.py -t cordova --sub-version $3 -a $1 -s $cordova_dir -d ${cordova4_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
                     fi
-                    [ $? -ne 0 ] && echo "[cordova] [$1] [$3]<$cordova>" >> $BUILD_LOG
+                    [ $? -ne 0 ] && echo "[cordova] [$1] [$2] [$3]<$cordova>" >> $BUILD_LOG
                 elif [ $cordova_num -gt 1 ];then
                     echo "$cordova not unique !!!" >> $BUILD_LOG
                 else
@@ -416,9 +412,9 @@ pack_Cordova_SampleApp(){
                 if [ $3 = "3.6" ];then
                     ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -m $2 --tools=$CTS_DIR/tools
                 elif [ $3 = "4.0" ];then
-                    ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -a $1 --tools=$CTS_DIR/tools
+                    ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -a $1 -p 000 --tools=$CTS_DIR/tools
                 fi
-                [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] $cordova_sampleapp" >> $BUILD_LOG
+                [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] [$2] [$3] $cordova_sampleapp" >> $BUILD_LOG
                 echo -ne "\n" 1>&100
             }&
         done
