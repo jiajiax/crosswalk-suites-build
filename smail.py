@@ -17,21 +17,21 @@ def send_mail(vnum,address):
 
     branchnum = str(sys.argv[4]).strip()
 
-    sender = 'jiajiax.li@intel.com'
+    sender = 'yunfeix.hao@intel.com'
     #sto = 'jiajiax.li@intel.com,leix.wang@intel.com,jianhuix.a.yue@intel.com,xiax.li@intel.com,yunxiaox.lv@intel.com,canx.cao@intel.com,huihuix.z.sun@intel.com'
     #scc = 'yunfeix.hao@intel.com,fengx.dai@intel.com,junx.b.li@intel.com,xiaoyux.zhang@intel.com,jenny.q.cao@intel.com'
 
     #if str(branchnum).startswith('Crosswalk') or (branchnum == "master" and wk_today == 5):
     if str(sys.argv[5]).strip() == "DL":
-        sto = 'jiajiax.li@intel.com,leix.wang@intel.com,jianhuix.a.yue@intel.com,xiax.li@intel.com,yunxiaox.lv@intel.com,canx.cao@intel.com,huihuix.z.sun@intel.com'
+        sto = 'zhongx.qiu@intel.com,yunfeix.hao@intel.com,wenhaox.jiang@intel.com,jingjingx.li@intel.com,jianqiux.li@intel.com,lix.xu@intel.com,canx.cao@intel.com'
         scc = 'yunfeix.hao@intel.com,jenny.q.cao@intel.com,tina.zhao@intel.com'
         pkgaddress = "http://otcqa.sh.intel.com/qa-auto/live/Xwalk-testsuites/"+address
-        mail_title = "DL team"
+        mail_title = "SH team"
     #elif branchnum == "master" and wk_today != 5:
     elif str(sys.argv[5]).strip() == "nightly":
         #sto = 'jiajiax.li@intel.com'
         #scc = 'jiajiax.li@intel.com'
-        sto = 'jiajiax.li@intel.com,fengx.dai@intel.com,junx.b.li@intel.com,yugang.fan@intel.com'
+        sto = 'wenhaox.jiang@intel.com,zhongx.qiu@intel.com,yunfeix.hao@intel.com,fengx.dai@intel.com,junx.b.li@intel.com,yugang.fan@intel.com'
         scc = 'xiaoyux.zhang@intel.com,jenny.q.cao@intel.com,deyix.liu@intel.com,tina.zhao@intel.com,wanming.lin@intel.com'
         pkgaddress = "http://jiaxxx-dev.sh.intel.com/ForNightlyAutoTest/"+address
         mail_title = "Nightly"
@@ -93,7 +93,7 @@ def send_mail(vnum,address):
     html += '<br><p>If you have other needs ,please connect me by IM !</p>'
     html += '<br/><br/>'
     html += '<p>Best Regards</p>'
-    html += '<p>Li Jiajia</p>'
+    html += '<p>Hao Yunfei</p>'
     html += '</body>'
     html += '</html>'
     

@@ -1,6 +1,16 @@
 #!/bin/bash
 
 # Authors: Li, Jiajia <jiajiax.li@intel.com>
+# Modified by: Qiu, Zhong <zhongx.qiu@intel.com>              
+#   2015-07-03: Add maven/gradle/ant build way for embeddingapi packages.
+#   2015-07-08: tools/mobilespec directory tree changed: now tools/mobilespec contains the following subdirectories
+#               tools/mobilespec/mobilespec_3.6
+#               tools/mobilespec/mobilespec_4.0
+#               Releated pull request: https://github.com/crosswalk-project/crosswalk-test-suites/pull/2453 
+#   2015-07-09: Substitute the crosswalk version in pom.xml for every embeddingapi test suite.  
+#   2015-07-29: Cordova-plugin-crosswalk-webview/platforms/android/xwalk.gradle doesn't config the crosswalk
+#               version any more. And crosswalk version is specified in crosswalk-test-suite/VERSION
+
 
 PATH=/usr/java/sdk/tools:/usr/java/sdk/platform-tools:/usr/java/jdk1.7.0_67/bin:/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/share/apache-maven/bin:/usr/java/gradle-2.4/bin
 
@@ -18,6 +28,10 @@ SAMPLE_LIST=""
 wweek=$(date +"%W" -d "+1 weeks")
 WW_DIR=/data/TestSuites_Storage/live
 . $SHARED_SPACE_DIR/list_suites/release_list
+PACK_TYPES="maven
+gradle
+ant
+"
 
 echo "Begin flag:" > $BUILD_LOG
 echo "---------------- `date` ---------------" >> $BUILD_LOG 
@@ -25,10 +39,18 @@ echo "---------------- `date` ---------------" >> $BUILD_LOG
 CORDOVA3_SAMPLEAPP_LIST="mobilespec
 helloworld
 remotedebugging
-gallery"
+CIRC
+Eh
+gallery
+statusbar
+renamePkg
+xwalkCommandLine"
 
-
-CORDOVA4_CONFIG=$CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview/src/android/xwalk.gradle
+# Update to change config path[yunfei 2015.07.23] 
+##### START #####
+#CORDOVA4_CONFIG=$CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview/src/android/xwalk.gradle
+CORDOVA4_CONFIG=$CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview/platforms/android/xwalk.gradle
+##### END #####
 
 CORDOVA_SAMPLEAPP_LIST=""
 
@@ -71,7 +93,7 @@ BRANCH_NAME="master"
 init_ww(){
     
     [ -d $1/android/$BRANCH_TYPE/$VERSION_NO ] && rm -rf $1/android/$BRANCH_TYPE/$VERSION_NO
-    if [ $(date +%w) -eq 3 ];then
+    if [ $(date +%w) -eq 4 ];then
         [ -d $1/tizen-common/$BRANCH_TYPE/$VERSION_NO ] && rm -rf $1/tizen-common/$BRANCH_TYPE/$VERSION_NO
         mkdir -p $1/{android/{$BRANCH_TYPE/$VERSION_NO/{testsuites-embedded/{x86,arm},testsuites-shared/{x86,arm},cordova3.6-embedded/{x86,arm},cordova3.6-shared/{x86,arm},cordova4.0-embedded/{x86,arm}},beta},tizen-common/$BRANCH_TYPE/$VERSION_NO}
         TIZEN_TESTS_DIR=$1/tizen-common/$BRANCH_TYPE/$VERSION_NO
@@ -123,10 +145,8 @@ prepare_tools(){
             if [ -d $PKG_TOOLS/crosswalk-cordova-$VERSION_NO-$1 ];then
                 rm -rf cordova
                 rm -rf cordova_plugins
-                rm -rf mobilespec
                 cp -a $PKG_TOOLS/crosswalk-cordova-$VERSION_NO-$1 cordova
                 cp -a $PKG_TOOLS/cordova_plugins_3.6 cordova_plugins
-                cp -a mobilespec_3.6 mobilespec
             else
                 echo "[tools] crosswalk-cordova-$VERSION_NO-$1 not exist !!!" >> $BUILD_LOG
                 return 1
@@ -137,17 +157,16 @@ prepare_tools(){
         if [[ $2 == "cordova4.0" ]];then
                 rm -rf cordova
                 rm -rf cordova_plugins
-                rm -rf mobilespec
                 cp -a $PKG_TOOLS/cordova_plugins_4.0 cordova_plugins
-                cp -a mobilespec_4.0 mobilespec
                 #cp -a $PKG_TOOLS/cordova_4.0 cordova
 
                 #cd $CTS_DIR/tools/cordova ; git reset --hard HEAD;git checkout 4.0.x ;git pull ;git stash apply stash@{0}
                 #cd $CTS_DIR/tools/cordova_plugins/cordova-crosswalk-engine;git reset --hard HEAD;git checkout master;git pull
                 cd $CTS_DIR/tools/cordova_plugins/cordova-plugin-crosswalk-webview;git reset --hard HEAD;git checkout master;git pull
                 #cd $CTS_DIR/tools/cordova_plugins/cordova-plugin-whitelist;git pull
-                sed -i 's/_beta:13+/:13+/g' $CORDOVA4_CONFIG
-                sed -i "s/:13+/:$VERSION_NO/g" $CORDOVA4_CONFIG
+                # No need to overwrite the crosswalk version any more
+                #sed -i 's/_beta//g' $CORDOVA4_CONFIG
+                #sed -i "s/:13+/:$VERSION_NO/g" $CORDOVA4_CONFIG
                 begin_line=`sed -n '/  maven {/=' $CORDOVA4_CONFIG`
                 end_line=$[$begin_line + 2]
                 sed -i "${begin_line},${end_line}d" $CORDOVA4_CONFIG
@@ -177,7 +196,7 @@ sync_Code(){
     # Get latest code from github
     cd $DEMOEX_DIR ; git reset --hard HEAD ;git checkout master ;git pull ;cd -
     #cd $CTS_DIR ; git reset --hard HEAD; git checkout master; cd -
-    if [ $(date +%w) -eq 3 ];then
+    if [ $(date +%w) -eq 4 ];then
         cd $CTS_DIR
         git reset --hard HEAD
         git checkout $BRANCH_NAME
@@ -188,7 +207,7 @@ sync_Code(){
         RELEASE_COMMIT_ID=$(git log -1 --pretty=oneline | awk '{print $1}')
         echo $RELEASE_COMMIT_ID > $SHARED_SPACE_DIR/Release_ID
         cd -
-        cat $RELEASE_COMMIT_FILE | mutt -s "$wweek Week Release Commit" jiajiax.li@intel.com
+        cat $RELEASE_COMMIT_FILE | mutt -s "$wweek Week Release Commit" yunfeix.hao@intel.com
     else
         RELEASE_COMMIT_ID=`cat $SHARED_SPACE_DIR/Release_ID`
         cd $CTS_DIR ; git reset --hard HEAD;git checkout $BRANCH_NAME;git pull ;git reset --hard $RELEASE_COMMIT_ID;cd -
@@ -376,7 +395,7 @@ pack_Cordova(){
                     cordova_dir=`find $CTS_DIR -name $cordova -type d`
                     if [ $3 = "3.6" ];then
                         $CTS_DIR/tools/build/pack.py -t cordova --sub-version $3 -m $2 -s $cordova_dir -d ${cordova3_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
-                    elif [ $3 = "4.0" ];then
+                    elif [ $3 = "4.x" ];then
                         $CTS_DIR/tools/build/pack.py -t cordova --sub-version $3 -a $1 -s $cordova_dir -d ${cordova4_path_arr[$2]}/$1 --tools=$CTS_DIR/tools
                     fi
                     [ $? -ne 0 ] && echo "[cordova] [$1] [$2] [$3]<$cordova>" >> $BUILD_LOG
@@ -398,21 +417,29 @@ pack_Cordova(){
 pack_Cordova_SampleApp(){
     #prepare_tools $1 cordova
     #if [ $? -eq 0 ];then
-        pkg_space=`date +%s%N | md5sum | head -c 15`
-        rm -rf $CTS_DIR/tools/build/$pkg_space
-        mkdir $CTS_DIR/tools/build/$pkg_space
-        cd $CTS_DIR/tools/build/$pkg_space
+    
+#        pkg_space=`date +%s%N | md5sum | head -c 15`
+#        rm -rf $CTS_DIR/tools/build/$pkg_space
+#        mkdir $CTS_DIR/tools/build/$pkg_space
+#        cp $CTS_DIR/tools/build/config_cordova_sample.json $CTS_DIR/tools/build/$pkg_space
+#        cd $CTS_DIR/tools/build/$pkg_space
         #clean_operator
         #multi_thread_pack 4
+        cd $CTS_DIR/tools/build
+        rm -fv *.apk
         CORDOVA_SAMPLEAPP_LIST=$CORDOVA3_SAMPLEAPP_LIST
         #CORDOVA_SAMPLEAPP_LIST=$CORDOVA4_SAMPLEAPP_LIST
         for cordova_sampleapp in $CORDOVA_SAMPLEAPP_LIST;do
             read -u 100
             {
                 if [ $3 = "3.6" ];then
-                    ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -m $2 --tools=$CTS_DIR/tools
-                elif [ $3 = "4.0" ];then
-                    ../pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -a $1 -p 000 --tools=$CTS_DIR/tools
+                    sed -i "s|https://github.com/Telerik-Verified-Plugins/NativePageTransitions.git#r0.4.1|/home/orange/02_yunfei/NativePageTransitions|g" ../pack_cordova_sample.py 
+                    sed -i "s|DEFAULT_CMD_TIMEOUT * 5|DEFAULT_CMD_TIMEOUT * 10|g" ../pack_cordova_sample.py 
+                    ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -m $2 --tools=$CTS_DIR/tools
+                elif [ $3 = "4.x" ];then
+                    sed -i "s|https://github.com/Telerik-Verified-Plugins/NativePageTransitions.git#r0.4.1|/home/orange/02_yunfei/NativePageTransitions|g" ../pack_cordova_sample.py 
+                    sed -i "s|DEFAULT_CMD_TIMEOUT * 5|DEFAULT_CMD_TIMEOUT * 10|g" ../pack_cordova_sample.py 
+                    ./pack_cordova_sample.py -n $cordova_sampleapp --cordova-version $3 -a $1 -p 000 --tools=$CTS_DIR/tools
                 fi
                 [ $? -ne 0 ] && echo "[cordova_sampleapp] [$1] [$2] [$3] $cordova_sampleapp" >> $BUILD_LOG
                 echo -ne "\n" 1>&100
@@ -423,11 +450,11 @@ pack_Cordova_SampleApp(){
         #clean_operator
         if [ $3 = "3.6" ];then
             zip cordova${3}_sampleapp_${1}.zip *.apk && cp cordova${3}_sampleapp_${1}.zip ${cordova3_path_arr[$2]}/$1
-        elif [ $3 = "4.0" ];then
+        elif [ $3 = "4.x" ];then
             zip cordova${3}_sampleapp_${1}.zip *.apk && cp cordova${3}_sampleapp_${1}.zip ${cordova4_path_arr[$2]}/$1
         fi
-        cd -
-        rm -rf $CTS_DIR/tools/build/$pkg_space
+#        cd -
+#        rm -rf $CTS_DIR/tools/build/$pkg_space
         
     #fi
 
@@ -479,6 +506,10 @@ pack_Aio(){
                 if [ $aio_num -eq 1 ];then
                     aio_dir=`find $CTS_DIR -name $aio -type d`
                     cd $aio_dir
+                    ##### START add workaround for new webrunner [2015.08.14]###
+                    mkdir -p webrunner
+                    cp $CTS_DIR/tools/resources/webrunner/* webrunner -a
+                    ##### END add workaround for new webrunner [2015.08.14]###
                     rm -f *.zip
                     if [ $1 = "apk" ];then
                         ./pack.sh -a $2 -m $3 -d ${tests_path_arr[$3]}/$2
@@ -489,7 +520,7 @@ pack_Aio(){
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                         #mv ${aio}-${VERSION_NO}-1.cordova.zip $CORDOVA_TESTS_DIR/$2
                     elif [ $1 = "cordova4.0" ];then
-                        ./pack.sh -t cordova -a $2 -v 4.0 -d ${cordova4_path_arr[$3]}/$2
+                        ./pack.sh -t cordova -a $2 -v 4.x -d ${cordova4_path_arr[$3]}/$2
                         [ $? -ne 0 ] && echo "[aio] [$1] [$2] [$3] <$aio>" >> $BUILD_LOG
                     fi
                 elif [ $aio_num -gt 1 ];then
@@ -555,7 +586,7 @@ clean_operator
 multi_thread_pack 8
 
 
-if [ $(date +%w) -eq 3 ];then
+if [ $(date +%w) -eq 4 ];then
     pack_Wgt
     pack_Xpk
     rm $TIZEN_IN_PROCESS_FLAG
@@ -617,13 +648,13 @@ wait
 
 prepare_tools x86 cordova4.0
 
-pack_Cordova x86 embedded 4.0 &
-pack_Cordova_SampleApp x86 embedded 4.0 &
+pack_Cordova x86 embedded 4.x &
+pack_Cordova_SampleApp x86 embedded 4.x &
 pack_Aio cordova4.0 x86 embedded &
 wait
 
-pack_Cordova arm embedded 4.0 &
-pack_Cordova_SampleApp arm embedded 4.0 &
+pack_Cordova arm embedded 4.x &
+pack_Cordova_SampleApp arm embedded 4.x &
 pack_Aio cordova4.0 arm embedded &
 wait
 
@@ -641,3 +672,9 @@ recover_Tests usecase-webapi-xwalk-tests $CTS_DIR/usecase/usecase-webapi-xwalk-t
 recover_Tests usecase-wrt-android-tests $CTS_DIR/usecase/usecase-wrt-android-tests
 recover_Tests usecase-cordova-android-tests $CTS_DIR/usecase/usecase-cordova-android-tests
 
+echo "SampleApp code and source Start flag:" >> $BUILD_LOG
+cd ~/00_jiajia/work_space/sampleApp/
+./sampleApp_pack.sh -v $VERSION_NO -r
+cd -
+echo "SampleApp code and source End flag:" >> $BUILD_LOG
+echo "---------------- `date`------------------" >> $BUILD_LOG

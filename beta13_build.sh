@@ -23,6 +23,7 @@ echo "Begin flag ---------------- `date` ---------------" > $BUILD_LOG
 
 CORDOVA_SAMPLEAPP_LIST="mobilespec
 helloworld
+Eh
 remotedebugging
 gallery"
 
